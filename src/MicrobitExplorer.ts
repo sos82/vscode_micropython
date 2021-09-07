@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-const SerialPort = require('serialport')
+
 
 export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile> {
 
@@ -83,15 +83,25 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 	}
 
 	public Connect() : void {
+		const SerialPort = require('serialport');
+		vscode.window.showInformationMessage(`Successfully called add entry.`);
 		
-
-		vscode.window.showInformationMessage(`Successfully called add entry.`)
-		/*
 		SerialPort.list().then(
-			ports => ports.forEach(console.log),
-			err => console.error(err)
-		)
-		*/
+			ports => {
+				ports.forEach(element => {
+					if (element.manufacturer == "ARM" && element.pnpId.search("micro:bit") > -1)
+					{
+						
+					}
+					
+				});
+			},
+			err => {
+				// TODO show error
+			}
+		);
+		
+		  
 	}
 }
 
