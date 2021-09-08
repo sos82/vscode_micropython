@@ -20,3 +20,10 @@ Run election-rebuild error can not detect version => npm install --save-dev elec
 .\node_modules\.bin\electron-rebuild.cmd
 
 https://www.electronjs.org/docs/tutorial/using-native-node-modules
+
+
+https://github.com/Microsoft/vscode-extension-samples/tree/main/tree-view-sample
+https://github.com/ntoll/microfs/blob/master/microfs.py
+
+from microbit import *
+display.show(Image.HAPPY)

@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { MicrobitFileProvider } from './MicrobitExplorer';
+import { TestView } from './testView';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -15,7 +16,13 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const microbitFileProvider = new MicrobitFileProvider(rootPath);
 	vscode.window.registerTreeDataProvider('MicrobitExplorer', microbitFileProvider);
-	vscode.commands.registerCommand('nodeDependencies.addEntry', () => microbitFileProvider.Connect());
+	vscode.commands.registerCommand('MicrobitExplorer.refreshEntry', () => microbitFileProvider.refresh());
+	vscode.commands.registerCommand('MicrobitExplorer.uploadEntry', () => microbitFileProvider.uploadFiles());
+	vscode.commands.registerCommand('MicrobitExplorer.addEntry', () => microbitFileProvider.Connect());
+
+    // Test View
+	new TestView(context);
+
 
 
 	// The command has been defined in the package.json file
