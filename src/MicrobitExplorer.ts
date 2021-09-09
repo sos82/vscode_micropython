@@ -9,15 +9,15 @@ const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline')
 var events = require('events');
 
-export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile> {
+export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFile> {
 	private serialPort;
 	private buff = "";
 	private files = null;
 	private eventHasData = new events.EventEmitter();
 
 
-	private _onDidChangeTreeData: vscode.EventEmitter<PythonFile | undefined | void> = new vscode.EventEmitter<PythonFile | undefined | void>();
-	readonly onDidChangeTreeData: vscode.Event<PythonFile | undefined | void> = this._onDidChangeTreeData.event;
+	private _onDidChangeTreeData: vscode.EventEmitter<MicrobitFile | undefined | void> = new vscode.EventEmitter<MicrobitFile | undefined | void>();
+	readonly onDidChangeTreeData: vscode.Event<MicrobitFile | undefined | void> = this._onDidChangeTreeData.event;
 
 	constructor(private workspaceRoot: string | undefined) {
 		console.log(workspaceRoot);
@@ -27,12 +27,12 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 		this._onDidChangeTreeData.fire();
 	}
 
-	getTreeItem(element: PythonFile): vscode.TreeItem {
+	getTreeItem(element: MicrobitFile): vscode.TreeItem {
 		return element;
 	}
 
-	getChildren(element?: PythonFile): Thenable<PythonFile[]> {
-		if (typeof this.serialPort === "undefined")
+	getChildren(element?: MicrobitFile): Thenable<MicrobitFile[]> {
+		if (typeof this.serialPort === "undefined" || !this.serialPort.isOpen )
 		{
 			vscode.window.showInformationMessage("Serial isn't connected");
 			return Promise.resolve([]);
@@ -45,6 +45,24 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 		return Promise.resolve(this.GetFilesFromMicrobit());
 	}
 
+	public async ResetDevice() : Promise<void> {
+		await vscode.window.withProgress({
+			location: vscode.ProgressLocation.Window,
+			cancellable: false,
+			title: 'Reset device'
+		}, async (progress) => {
+			
+			progress.report({  increment: 0 });
+		
+			// Wait for 60 second to clear error
+			let data = await this.SendAndRecv("\x04",  60 * 1000);
+			vscode.window.showInformationMessage(data);
+		
+			progress.report({ increment: 100 });
+			return data;
+		});
+
+	}
 
 	public uploadFiles(): void{
 		fs.readdir(this.workspaceRoot, async (error, files) => {
@@ -52,12 +70,22 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 				console.log(error);
 			else {
 				for (const file of files) {
-					console.log("Begih write " + file)
+					console.log("Begin write " + file)
 					await this.UploadFile(path.join(this.workspaceRoot, file), file);
 					console.log("End write " + file)
 				}
+				vscode.window.showInformationMessage("All files are uploaded. Reboot device");
+				await this.ResetDevice();
+				await this.refresh();
 			}
-		});
+		}
+		);
+		
+	}
+
+	public DisconnectDevice(): void {
+		this.serialPort.close();
+		this.refresh();
 	}
 
 	public async downloadFiles(): Promise<void>{
@@ -68,18 +96,23 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 			console.log("End read " + element.filename)
 
 		}
+		vscode.window.showInformationMessage('Downloaded all file ');
+	}
+
+	public async deleteFile(node: MicrobitFile):Promise<void>{
+		await this.SendAndRecv("import os\r\n");
+		await this.SendAndRecv("os.remove('" + node.filename + "')\r\n");
+		await this.refresh();
 	}
 
 
 	public Connect() : void {
-		vscode.window.showInformationMessage(`Successfully called add entry.`);
-		
 		SerialPort.list().then(
 			ports => {
 				ports.forEach(element => {
 					
-                    if (parseInt(element.productId, 16) == 0x0204 && parseInt(element.vendorId, 16) == 0x0D28)
-					//if (element.manufacturer == "ARM" && element.pnpId.search("micro:bit") > -1)
+                    if (parseInt(element.productId, 16) == 0x0204 
+						&& parseInt(element.vendorId, 16) == 0x0D28)
 					{
 						this.ConnectToMicrobit(element.path);
 						return;
@@ -116,11 +149,10 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 		result = await this.SendAndRecv("f.write(b'" +data+"')\r\n");
 		console.log(result);
 		result = await this.SendAndRecv("f.close()\r\n");
-		
-		console.log(result);			// Display the file content
+
 	}
 
-	async GetFilesFromMicrobit() : Promise< PythonFile[]>{
+	async GetFilesFromMicrobit() : Promise< MicrobitFile[]>{
 		let data = await this.SendAndRecv("import os\r\n");
 		data = eval(await this.SendAndRecv("os.listdir()\r\n"));
 		console.log(data)
@@ -128,35 +160,37 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 		this.files = []
 		for (const idx in data)
 		{
-			this.files = this.files.concat(new PythonFile(data[idx], vscode.TreeItemCollapsibleState.None));
+			this.files = this.files.concat(new MicrobitFile(data[idx], vscode.TreeItemCollapsibleState.None));
 		}
 
         return this.files
 	}
 
-	private async SendAndRecv(cmd: string): Promise<any> {
+	private async SendAndRecv(cmd: string, timeout : number = 1000): Promise<any> {
 		this.serialPort.write(cmd);
 
-		let data = await this.WaitForReady();
-
-		return data.substring(cmd.length);
+		let data = await this.WaitForReady(timeout);
+		if (data != null)
+			return data.substring(cmd.length);
+		else 
+			return null;
 	}
 
-	private async WaitForReady() : Promise<any> {
+	private async WaitForReady(timeout : number = 1000 ) : Promise<any> {
 		return new Promise((resolve) => {
 			let wait = setTimeout(() => {
 				console.log("Timeout")
 				this.eventHasData.removeAllListeners('data');
 				clearTimeout(wait);
 				resolve(null);
-			}, 1000);
+			}, timeout);
 
 			this.eventHasData.on("data", function(this:any){
 				if (this.buff.search(">>>") > -1)
 				{
 					clearTimeout(wait);
 					this.eventHasData.removeAllListeners('data');
-					let data = this.buff.substring(0, this.buff.search(">>>"));
+					let data = this.buff.substring(0, this.buff.search("\r\n>>>"));
 					this.buff = "";
 					resolve(data);
 				}
@@ -169,33 +203,34 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 		this.buff += this.serialPort.read();
 		this.eventHasData.emit("data")
 	}
-	
+
 	private async ConnectToMicrobit(serialpath:string):Promise<void>{
+
+		if (this.serialPort && this.serialPort.isOpen )
+		{
+			vscode.window.showInformationMessage('Still in process ');
+			return;
+		}
+		vscode.window.showInformationMessage('Connecting to ' + serialpath);
 		this.serialPort = new SerialPort(serialpath, {
 			baudRate: 115200
 		});
 
 		this.serialPort.on('readable', this.OnRecvData.bind(this));		
+		this.serialPort.on('close', function() { 
+			this.DisconnectDevice();
+		}.bind(this));
 
-		// TODO send Ctrl+D
-		
-		let data = await this.WaitForReady();
-		if (data == null)
-		{
-			console.log("Retry send help()")
-			data = await this.SendAndRecv("help()\r\n")
-		}
-		console.log(data)
-		
-		console.log("Connected")
-
+		await this.ResetDevice();
+		vscode.window.showInformationMessage('Connected to ' + serialpath);
 		this.refresh();
+
 	}
 	
 
 }
 
-export class PythonFile extends vscode.TreeItem {
+export class MicrobitFile extends vscode.TreeItem {
 
 	constructor(
 		public readonly filename: string,
@@ -203,14 +238,14 @@ export class PythonFile extends vscode.TreeItem {
 	) {
 		super(filename, collapsibleState);
 
-		//this.tooltip = `${this.label}-${this.version}`;
-		//this.description = this.version;
+
 	}
 
 	iconPath = {
-		light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
-		dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
+		light: path.join(__filename, '..', '..', 'resources', 'light', 'document.svg'),
+		dark: path.join(__filename, '..', '..', 'resources', 'dark', 'document.svg')
 	};
 
-	//contextValue = 'dependency';
+	contextValue = 'MicrobitFile';
+
 }

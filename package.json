@@ -1,9 +1,9 @@
 {
-	"name": "helloworld-sample",
-	"displayName": "helloworld-sample",
-	"description": "HelloWorld example for VS Code",
+	"name": "microbit-micropython",
+	"displayName": "Microbit Micropython util",
+	"description": "Microbit Micropython util for VS Code",
 	"version": "0.0.1",
-	"publisher": "vscode-samples",
+	"publisher": "MinaHitech",
 	"enableProposedApi": true,
 	"repository": "https://github.com/Microsoft/vscode-extension-samples/helloworld-sample",
 	"engines": {
@@ -36,12 +36,6 @@
 					"icon": "media/microbit.svg",
 					"contextualTitle": "Microbit Explorer"
 				}
-			],
-			"explorer": [
-				{
-					"id": "testView",
-					"name": "Test View"
-				}
 			]
 		},
 		"commands": [
@@ -70,35 +64,71 @@
 				}
 			},
 			{
+				"command": "MicrobitExplorer.deleteEntry",
+				"title": "Delete"
+			},
+			{
+				"command": "MicrobitExplorer.resetEntry",
+				"title": "Reset device",
+				"icon": {
+					"light": "resources/light/shutdown.svg",
+					"dark": "resources/dark/shutdown.svg"
+				}
+			},
+			{
+				"command": "MicrobitExplorer.disconnectEntry",
+				"title": "Disconnect",
+				"icon": {
+					"light": "resources/light/disconnect.svg",
+					"dark": "resources/dark/disconnect.svg"
+				}
+			},
+			{
 				"command": "extension.helloWorld",
 				"title": "Hello World"
 			}
 		],
 		"menus": {
 			"view/title": [
-				
 				{
-					"command": "MicrobitExplorer.refreshEntry",
+					"command": "MicrobitExplorer.disconnectEntry",
+					"when": "view == MicrobitExplorer",
+					"group": "navigation@0"
+				},	
+				{
+					"command": "MicrobitExplorer.resetEntry",
+					"when": "view == MicrobitExplorer",
+					"group": "navigation@1"
+				},				
+
+				{
+					"command": "MicrobitExplorer.downloadEntry",
 					"when": "view == MicrobitExplorer",
 					"group": "navigation@2"
 				},
 				{
-					"command": "MicrobitExplorer.downloadEntry",
-					"when": "view == MicrobitExplorer",
-					"group": "navigation@0"
-				},
-				{
 					"command": "MicrobitExplorer.uploadEntry",
 					"when": "view == MicrobitExplorer",
-					"group": "navigation@1"
-				}
+					"group": "navigation@3"
+				},
+				{
+					"command": "MicrobitExplorer.refreshEntry",
+					"when": "view == MicrobitExplorer",
+					"group": "navigation@4"
+				}				
 
+			],
+			"view/item/context": [
+				{
+					"command": "MicrobitExplorer.deleteEntry",
+					"when": "view == MicrobitExplorer && viewItem == MicrobitFile"
+				}
 			]
 		},
 		"viewsWelcome": [
 			{
 				"view": "MicrobitExplorer",
-				"contents": "No node dependencies found [learn more](https://www.npmjs.com/).\n[Connect Microbit](command:MicrobitExplorer.connectEntry)"
+				"contents": "Connect to Microbit to conntinue\n[Connect Microbit](command:MicrobitExplorer.connectEntry)"
 			}
 		]
 	},
