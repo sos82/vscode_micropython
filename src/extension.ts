@@ -18,7 +18,8 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.window.registerTreeDataProvider('MicrobitExplorer', microbitFileProvider);
 	vscode.commands.registerCommand('MicrobitExplorer.refreshEntry', () => microbitFileProvider.refresh());
 	vscode.commands.registerCommand('MicrobitExplorer.uploadEntry', () => microbitFileProvider.uploadFiles());
-	vscode.commands.registerCommand('MicrobitExplorer.addEntry', () => microbitFileProvider.Connect());
+	vscode.commands.registerCommand('MicrobitExplorer.downloadEntry', () => microbitFileProvider.downloadFiles());
+	vscode.commands.registerCommand('MicrobitExplorer.connectEntry', () => microbitFileProvider.Connect());
 
     // Test View
 	new TestView(context);

@@ -57,8 +57,16 @@
 				"command": "MicrobitExplorer.uploadEntry",
 				"title": "Upload",
 				"icon": {
-					"light": "resources/light/document.svg",
-					"dark": "resources/dark/document.svg"
+					"light": "resources/light/upload.svg",
+					"dark": "resources/dark/upload.svg"
+				}
+			},
+			{
+				"command": "MicrobitExplorer.downloadEntry",
+				"title": "Download",
+				"icon": {
+					"light": "resources/light/download.svg",
+					"dark": "resources/dark/download.svg"
 				}
 			},
 			{
@@ -72,12 +80,17 @@
 				{
 					"command": "MicrobitExplorer.refreshEntry",
 					"when": "view == MicrobitExplorer",
-					"group": "navigation"
+					"group": "navigation@2"
+				},
+				{
+					"command": "MicrobitExplorer.downloadEntry",
+					"when": "view == MicrobitExplorer",
+					"group": "navigation@0"
 				},
 				{
 					"command": "MicrobitExplorer.uploadEntry",
 					"when": "view == MicrobitExplorer",
-					"group": "navigation"
+					"group": "navigation@1"
 				}
 
 			]
@@ -85,7 +98,7 @@
 		"viewsWelcome": [
 			{
 				"view": "MicrobitExplorer",
-				"contents": "No node dependencies found [learn more](https://www.npmjs.com/).\n[Connect Microbit](command:MicrobitExplorer.addEntry)"
+				"contents": "No node dependencies found [learn more](https://www.npmjs.com/).\n[Connect Microbit](command:MicrobitExplorer.connectEntry)"
 			}
 		]
 	},

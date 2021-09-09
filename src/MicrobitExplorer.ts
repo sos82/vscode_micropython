@@ -12,6 +12,7 @@ var events = require('events');
 export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile> {
 	private serialPort;
 	private buff = "";
+	private files = null;
 	private eventHasData = new events.EventEmitter();
 
 
@@ -36,46 +37,37 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 			vscode.window.showInformationMessage("Serial isn't connected");
 			return Promise.resolve([]);
 		}
-		/*
 		if (!this.workspaceRoot) {
 			vscode.window.showInformationMessage('No dependency in empty workspace');
 			return Promise.resolve([]);
 		}
-		*/
 
 		return Promise.resolve(this.GetFilesFromMicrobit());
-
-		/*
-
-		if (element) {
-			return Promise.resolve(this.getDepsInPackageJson(path.join(this.workspaceRoot, 'node_modules', element.label, 'package.json')));
-		} else {
-			const packageJsonPath = path.join(this.workspaceRoot, 'package.json');
-			if (this.pathExists(packageJsonPath)) {
-				return Promise.resolve(this.getDepsInPackageJson(packageJsonPath));
-			} else {
-				vscode.window.showInformationMessage('Workspace has no package.json');
-				return Promise.resolve([]);
-			}
-		}
-		*/
-
 	}
 
 
-	public  uploadFiles(): void{
-		
+	public uploadFiles(): void{
 		fs.readdir(this.workspaceRoot, async (error, files) => {
 			if (error)
 				console.log(error);
 			else {
 				for (const file of files) {
 					console.log("Begih write " + file)
-					await this.UploadFile(this.workspaceRoot + "/"+ file, file);
+					await this.UploadFile(path.join(this.workspaceRoot, file), file);
 					console.log("End write " + file)
 				}
 			}
 		});
+	}
+
+	public async downloadFiles(): Promise<void>{
+		for (const element of this.files)
+		{
+			console.log("Begin read " + element.filename)
+			await this.DownloadFile(element.filename, path.join(this.workspaceRoot, element.filename))
+			console.log("End read " + element.filename)
+
+		}
 	}
 
 
@@ -85,7 +77,8 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 		SerialPort.list().then(
 			ports => {
 				ports.forEach(element => {
-                    if (element.productId == '0204' && element.vendorId == '0D28')
+					
+                    if (parseInt(element.productId, 16) == 0x0204 && parseInt(element.vendorId, 16) == 0x0D28)
 					//if (element.manufacturer == "ARM" && element.pnpId.search("micro:bit") > -1)
 					{
 						this.ConnectToMicrobit(element.path);
@@ -101,39 +94,44 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 		  
 	}
 
-	async  UploadFile(file:string, target:string) :Promise<void>{
-		/*
-		fs.readFile(file, 'utf8', async function(err, data){
-			data = data.replace("\r\n", "\\x0D\\x0A");
-			let result = await this.SendAndRecv("f = open('" + target +"', 'w')\r\n");
-			console.log(result);
-			result = await this.SendAndRecv("f.write(b'" +data+"')\r\n");
-			console.log(result);
-			result = await this.SendAndRecv("f.close()\r\n");
-			console.log(result);			// Display the file content
-		}.bind(this));
-		*/
+	async DownloadFile(file:string, dest: string) :Promise<void>{
+		let result = await this.SendAndRecv("f = open('" + file +"', 'r')\r\n");
+		console.log(result);
+		
+		let content = await this.SendAndRecv("print(f.read())\r\n");
+		
+		result = await this.SendAndRecv("f.close()\r\n");
+		console.log(result);
 
+		await fs.writeFile(dest, content);
+	}
+
+	async UploadFile(file:string, target:string) :Promise<void>{
 		let data = await fs.readFile(file, "binary");
 		
-		data = data.replace("\r\n", "\\x0D\\x0A");
+		data = data.replace(/\r/g, "");
+		data = data.replace(/\n/g, "\\x0A");
 		let result = await this.SendAndRecv("f = open('" + target +"', 'w')\r\n");
 		console.log(result);
 		result = await this.SendAndRecv("f.write(b'" +data+"')\r\n");
 		console.log(result);
 		result = await this.SendAndRecv("f.close()\r\n");
+		
 		console.log(result);			// Display the file content
-
-
 	}
 
 	async GetFilesFromMicrobit() : Promise< PythonFile[]>{
 		let data = await this.SendAndRecv("import os\r\n");
-		data = await this.SendAndRecv("os.listdir()\r\n");
+		data = eval(await this.SendAndRecv("os.listdir()\r\n"));
 		console.log(data)
 
-        return [new PythonFile("main.py", vscode.TreeItemCollapsibleState.None)]
+		this.files = []
+		for (const idx in data)
+		{
+			this.files = this.files.concat(new PythonFile(data[idx], vscode.TreeItemCollapsibleState.None));
+		}
 
+        return this.files
 	}
 
 	private async SendAndRecv(cmd: string): Promise<any> {
@@ -141,8 +139,7 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 
 		let data = await this.WaitForReady();
 
-		//return data.substring(cmd.length);
-		return data;
+		return data.substring(cmd.length);
 	}
 
 	private async WaitForReady() : Promise<any> {
@@ -179,6 +176,8 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<PythonFile>
 		});
 
 		this.serialPort.on('readable', this.OnRecvData.bind(this));		
+
+		// TODO send Ctrl+D
 		
 		let data = await this.WaitForReady();
 		if (data == null)
