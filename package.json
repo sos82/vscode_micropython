@@ -2,7 +2,7 @@
 	"name": "microbit-micropython",
 	"displayName": "Microbit MicroPython Util",
 	"description": "Microbit MicroPython Util: Connect, browse, download, upload multiple files",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"publisher": "sos82",
 	"icon": "media/microbit.png",
 	"enableProposedApi": true,
@@ -10,6 +10,7 @@
 		"type":"git",
 		"url":"https://github.com/sos82/vscode_micropython"
 	},
+	"keywords": ["microbit", "micropython"],
 	"engines": {
 		"vscode": "^1.57.0"
 	},

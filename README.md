@@ -1,9 +1,9 @@
 # Microbit Micropython Util
 Explorer micro:bit with MicroPython in Visual Studio Code.
 
-![Explorer file on Micro:bit!](/media\explorer_1.png "Explorer file on Micro:bit")
+![Explorer file on Micro:bit!](https://github.com/sos82/vscode_micropython/raw/master/media/explorer_1.png "Explorer file on Micro:bit")
 
-![Explorer file on Micro:bit!](/media\explorer_2.png "Explorer file on Micro:bit")
+![Explorer file on Micro:bit!](https://github.com/sos82/vscode_micropython/raw/master/media/explorer_2.png "Explorer file on Micro:bit")
 
 ## Features
 * Explorer files in micro:bit.
