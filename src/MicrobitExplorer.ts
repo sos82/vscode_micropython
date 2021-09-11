@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { throws } from 'assert';
+import { resolve } from 'path';
 
 const fs = require('fs').promises;
 const SerialPort = require('serialport');
@@ -46,7 +47,13 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 	}
 
 	public async ResetDevice() : Promise<void> {
-		await vscode.window.withProgress({
+		if (typeof this.serialPort === "undefined")
+		{
+			vscode.window.showInformationMessage("Serial isn't connected");
+			return null;
+		}
+
+		let result  = await vscode.window.withProgress({
 			location: vscode.ProgressLocation.Window,
 			cancellable: false,
 			title: 'Reset device'
@@ -62,33 +69,75 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 			return data;
 		});
 
+		return result;
+
 	}
 
-	public uploadFiles(): void{
-		fs.readdir(this.workspaceRoot, async (error, files) => {
-			if (error)
-				console.log(error);
-			else {
-				for (const file of files) {
-					console.log("Begin write " + file)
-					await this.UploadFile(path.join(this.workspaceRoot, file), file);
-					console.log("End write " + file)
+	public async uploadFiles(): Promise<void>{
+		if (typeof this.serialPort === "undefined" || !this.serialPort.isOpen )
+		{
+			vscode.window.showInformationMessage("Serial isn't connected");
+			return ;
+		}
+		if (!this.workspaceRoot) {
+			vscode.window.showInformationMessage('No dependency in empty workspace');
+			return ;
+		}
+
+		await this.ScanUploadFileInFolder(this.workspaceRoot, "");
+		vscode.window.showInformationMessage("All files are uploaded. Reboot device");
+		await this.ResetDevice();
+		await this.refresh();
+	}
+
+	protected async ScanUploadFileInFolder(currPath:string, relatePath: string) :Promise<void> {
+		let files = await fs.readdir(currPath);
+
+		for (const file of files) {
+			let stats = await fs.lstat(path.join(currPath, file));
+			if (stats.isDirectory())
+			{
+				if (file != ".vscode")
+				{
+					// TODO will support folder later
+					/*
+					await this.createFolder(path.join(relatePath, file));
+					await this.ScanUploadFileInFolder(path.join(this.workspaceRoot, file),  
+					path.join(relatePath, file) );
+					*/
 				}
-				vscode.window.showInformationMessage("All files are uploaded. Reboot device");
-				await this.ResetDevice();
-				await this.refresh();
+			}
+			else
+			{
+				let targetFile = path.join(relatePath, file);
+				console.log("Begin write " + targetFile)
+				await this.UploadFile(path.join(this.workspaceRoot, file), targetFile);
+				console.log("End write " + targetFile)
 			}
 		}
-		);
-		
 	}
 
 	public DisconnectDevice(): void {
+		if (typeof this.serialPort === "undefined" || !this.serialPort.isOpen )
+		{
+			vscode.window.showInformationMessage("Serial isn't connected");
+			return ;
+		}
 		this.serialPort.close();
 		this.refresh();
 	}
 
 	public async downloadFiles(): Promise<void>{
+		if (typeof this.serialPort === "undefined" || !this.serialPort.isOpen )
+		{
+			vscode.window.showInformationMessage("Serial isn't connected");
+			return ;
+		}
+		if (!this.workspaceRoot) {
+			vscode.window.showInformationMessage('No dependency in empty workspace');
+			return ;
+		}
+
 		for (const element of this.files)
 		{
 			console.log("Begin read " + element.filename)
@@ -99,7 +148,25 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 		vscode.window.showInformationMessage('Downloaded all file ');
 	}
 
+	public async createFolder(path:string) :Promise<void> {
+		// TODO need investigate to create folder
+		if (typeof this.serialPort === "undefined" || !this.serialPort.isOpen )
+		{
+			vscode.window.showInformationMessage("Serial isn't connected");
+			return ;
+		}
+		await this.SendAndRecv("import os\r\n");
+		await this.SendAndRecv("os.mkdir('" + path + "')\r\n");
+
+	}
+
 	public async deleteFile(node: MicrobitFile):Promise<void>{
+		if (typeof this.serialPort === "undefined" || !this.serialPort.isOpen )
+		{
+			vscode.window.showInformationMessage("Serial isn't connected");
+			return ;
+		}
+
 		await this.SendAndRecv("import os\r\n");
 		await this.SendAndRecv("os.remove('" + node.filename + "')\r\n");
 		await this.refresh();
@@ -107,24 +174,31 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 
 
 	public Connect() : void {
+		if (!this.workspaceRoot) {
+			vscode.window.showWarningMessage('Please open folder or workspace');
+			return
+		}
+
 		SerialPort.list().then(
-			ports => {
-				ports.forEach(element => {
-					
-                    if (parseInt(element.productId, 16) == 0x0204 
-						&& parseInt(element.vendorId, 16) == 0x0D28)
+			async ports => {
+				for (const index in ports)
+				{
+                    if (parseInt(ports[index].productId, 16) == 0x0204 
+						&& parseInt(ports[index].vendorId, 16) == 0x0D28)
 					{
-						this.ConnectToMicrobit(element.path);
-						return;
+						console.log("Try connect");
+						if (await this.ConnectToMicrobit(ports[index].path) == true)
+							return;
 					}
-					
-				});
+				}
+				console.log("Done");
+				vscode.window.showWarningMessage("Don't find any device");
 			},
 			err => {
-				// TODO show error
+				vscode.window.showWarningMessage("Don't find any device");
 			}
+
 		);
-		  
 	}
 
 	async DownloadFile(file:string, dest: string) :Promise<void>{
@@ -171,26 +245,44 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 
 		let data = await this.WaitForReady(timeout);
 		if (data != null)
-			return data.substring(cmd.length);
+		{
+			// Ensure remove unwanted data
+			let result = data.substring(data.search(cmd) + cmd.length + 1);
+			return result;
+		}			
 		else 
 			return null;
 	}
 
 	private async WaitForReady(timeout : number = 1000 ) : Promise<any> {
 		return new Promise((resolve) => {
+			// expect have data after send request
+			let waitfordata = setTimeout(() => {
+				clearTimeout(waitfordata);
+				if (this.buff.length == 0)
+				{
+					console.log("Min Timeout")
+					clearTimeout(wait);
+					this.eventHasData.removeAllListeners('data');
+					resolve(null);
+				}
+			}, 500);
+
 			let wait = setTimeout(() => {
 				console.log("Timeout")
 				this.eventHasData.removeAllListeners('data');
+				clearTimeout(waitfordata);
 				clearTimeout(wait);
 				resolve(null);
 			}, timeout);
 
 			this.eventHasData.on("data", function(this:any){
-				if (this.buff.search(">>>") > -1)
+				if (this.buff.search(">>> ") > -1)
 				{
 					clearTimeout(wait);
+					clearTimeout(waitfordata);
 					this.eventHasData.removeAllListeners('data');
-					let data = this.buff.substring(0, this.buff.search("\r\n>>>"));
+					let data = this.buff.substring(0, this.buff.search("\r\n>>> "));
 					this.buff = "";
 					resolve(data);
 				}
@@ -204,11 +296,11 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 		this.eventHasData.emit("data")
 	}
 
-	private async ConnectToMicrobit(serialpath:string):Promise<void>{
+	private async ConnectToMicrobit(serialpath:string):Promise<boolean>{
 
 		if (this.serialPort && this.serialPort.isOpen )
 		{
-			vscode.window.showInformationMessage('Still in process ');
+			vscode.window.showInformationMessage('Device is connected and trying to get files');
 			return;
 		}
 		vscode.window.showInformationMessage('Connecting to ' + serialpath);
@@ -221,9 +313,20 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 			this.DisconnectDevice();
 		}.bind(this));
 
-		await this.ResetDevice();
-		vscode.window.showInformationMessage('Connected to ' + serialpath);
-		this.refresh();
+		let result = await this.ResetDevice();
+		
+		if (result ==  null)
+		{
+			this.serialPort.close();
+			vscode.window.showErrorMessage('Cannot connect to ' + serialpath);
+			return false;
+		}
+		else
+		{
+			vscode.window.showInformationMessage('Connected to ' + serialpath);
+			this.refresh();
+			return true;
+		}
 
 	}
 	

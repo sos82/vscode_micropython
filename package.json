@@ -1,11 +1,15 @@
 {
 	"name": "microbit-micropython",
-	"displayName": "Microbit Micropython util",
-	"description": "Microbit Micropython util for VS Code",
-	"version": "0.0.1",
-	"publisher": "MinaHitech",
+	"displayName": "Microbit MicroPython Util",
+	"description": "Microbit MicroPython Util: Connect, browse, download, upload multiple files",
+	"version": "0.1.0",
+	"publisher": "sos82",
+	"icon": "media/microbit.png",
 	"enableProposedApi": true,
-	"repository": "https://github.com/Microsoft/vscode-extension-samples/helloworld-sample",
+	"repository": {
+		"type":"git",
+		"url":"https://github.com/sos82/vscode_micropython"
+	},
 	"engines": {
 		"vscode": "^1.57.0"
 	},
@@ -13,9 +17,7 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.helloWorld",
-		"onView:MicrobitExplorer",
-		"onView:testView"
+		"onView:MicrobitExplorer"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -24,7 +26,7 @@
 				{
 					"id": "microbit-explorer",
 					"title": "Microbit Explorer",
-					"icon": "media/microbit.svg"
+					"icon": "resources/microbit.svg"
 				}
 			]
 		},
@@ -82,10 +84,6 @@
 					"light": "resources/light/disconnect.svg",
 					"dark": "resources/dark/disconnect.svg"
 				}
-			},
-			{
-				"command": "extension.helloWorld",
-				"title": "Hello World"
 			}
 		],
 		"menus": {
@@ -94,13 +92,12 @@
 					"command": "MicrobitExplorer.disconnectEntry",
 					"when": "view == MicrobitExplorer",
 					"group": "navigation@0"
-				},	
+				},
 				{
 					"command": "MicrobitExplorer.resetEntry",
 					"when": "view == MicrobitExplorer",
 					"group": "navigation@1"
-				},				
-
+				},
 				{
 					"command": "MicrobitExplorer.downloadEntry",
 					"when": "view == MicrobitExplorer",
@@ -115,8 +112,7 @@
 					"command": "MicrobitExplorer.refreshEntry",
 					"when": "view == MicrobitExplorer",
 					"group": "navigation@4"
-				}				
-
+				}
 			],
 			"view/item/context": [
 				{

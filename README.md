@@ -1,29 +1,21 @@
-# On Ubuntu need upgrade node version
-> sudo npm cache clean -f
-> sudo npm install -g n
-> sudo n stable
+# Microbit Micropython Util
+Explorer micro:bit with MicroPython in Visual Studio Code.
 
-To upgrade to latest version (and not current stable) version, you can use
-> sudo n latest
-> sudo n 14.16.0
+![Explorer file on Micro:bit!](/media\explorer_1.png "Explorer file on Micro:bit")
 
+![Explorer file on Micro:bit!](/media\explorer_2.png "Explorer file on Micro:bit")
 
+## Features
+* Explorer files in micro:bit.
+* Upload files to micro:bit.
+* Download files from micro:bit to local space.
 
+## Preconditions
+* We must install MicroPython in micro:bit first. 
+* We have open folder or workspace to use features.
 
-npm install --save-dev electron-rebuild
+## Quick links
+* [Micro:bit MicroPython](https://microbit-micropython.readthedocs.io/en/v2-docs) 
 
-# Every time you run "npm install", run this:
-./node_modules/.bin/electron-rebuild
-Run election-rebuild error can not detect version => npm install --save-dev electron
-
-# On Windows if you have trouble, try:
-.\node_modules\.bin\electron-rebuild.cmd
-
-https://www.electronjs.org/docs/tutorial/using-native-node-modules
-
-
-https://github.com/Microsoft/vscode-extension-samples/tree/main/tree-view-sample
-https://github.com/ntoll/microfs/blob/master/microfs.py
-
-from microbit import *
-display.show(Image.HAPPY)
+## Contribution
+Contributions are always welcome.
