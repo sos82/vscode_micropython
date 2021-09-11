@@ -2,7 +2,7 @@
 	"name": "microbit-micropython",
 	"displayName": "Microbit MicroPython Util",
 	"description": "Microbit MicroPython Util: Connect, browse, download, upload multiple files",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"publisher": "sos82",
 	"icon": "media/microbit.png",
 	"enableProposedApi": true,
@@ -155,10 +155,10 @@
 		"electron": "^13.1.8",
 		"electron-rebuild": "^3.2.3",
 		"rimraf": "^2.6.2",
-		"minimist": "^0.2.1"
-	},
-	"dependencies": {
+		"minimist": "^0.2.1",
 		"serialport": "^9.2.1",
 		"electron-releases": "^3.783.0"
+	},
+	"dependencies": {
 	}
 }
