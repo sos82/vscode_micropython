@@ -9,6 +9,7 @@ Explorer micro:bit with MicroPython in Visual Studio Code.
 * Explorer files in micro:bit.
 * Upload files to micro:bit.
 * Download files from micro:bit to local space.
+* Add "Micro:bit" output to get status of device.
 
 ## Preconditions
 * We must install MicroPython in micro:bit first. 

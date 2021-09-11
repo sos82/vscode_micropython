@@ -2,15 +2,18 @@
 	"name": "microbit-micropython",
 	"displayName": "Microbit MicroPython Util",
 	"description": "Microbit MicroPython Util: Connect, browse, download, upload multiple files",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"publisher": "sos82",
 	"icon": "media/microbit.png",
 	"enableProposedApi": true,
 	"repository": {
-		"type":"git",
-		"url":"https://github.com/sos82/vscode_micropython"
+		"type": "git",
+		"url": "https://github.com/sos82/vscode_micropython"
 	},
-	"keywords": ["microbit", "micropython"],
+	"keywords": [
+		"microbit",
+		"micropython"
+	],
 	"engines": {
 		"vscode": "^1.57.0"
 	},
@@ -18,7 +21,13 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onView:MicrobitExplorer"
+		"onView:MicrobitExplorer",
+		"onCommand:MicrobitExplorer.refreshEntry",
+		"onCommand:MicrobitExplorer.uploadEntry",
+		"onCommand:MicrobitExplorer.downloadEntry",
+		"onCommand:MicrobitExplorer.deleteEntry",
+		"onCommand:MicrobitExplorer.resetEntry",
+		"onCommand:MicrobitExplorer.disconnectEntry"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
