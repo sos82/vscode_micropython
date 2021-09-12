@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-    - fix_bug_upload_file
+    - master
   tags:
     include:
     - v*
