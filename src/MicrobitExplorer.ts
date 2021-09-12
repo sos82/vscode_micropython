@@ -6,8 +6,9 @@ import { throws } from 'assert';
 import { resolve } from 'path';
 
 const fs = require('fs').promises;
+//const SerialPort = require('node-usb-native');
 const SerialPort = require('serialport');
-const Readline = require('@serialport/parser-readline')
+//const Readline = require('@serialport/parser-readline')
 var events = require('events');
 
 export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFile> {
@@ -92,10 +93,7 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 			
 			progress.report({  increment: 0 });
 		
-			// Wait for 60 second to clear error
 			let data = await this.SendAndRecv("\x03", true);
-			vscode.window.showInformationMessage(data);
-		
 			progress.report({ increment: 100 });
 			return data;
 		});
