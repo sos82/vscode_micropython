@@ -2,15 +2,18 @@
 	"name": "microbit-micropython",
 	"displayName": "Microbit MicroPython Util",
 	"description": "Microbit MicroPython Util: Connect, browse, download, upload multiple files",
-	"version": "0.2.0",
+	"version": "0.1.0",
 	"publisher": "sos82",
 	"icon": "media/microbit.png",
 	"enableProposedApi": true,
 	"repository": {
-		"type":"git",
-		"url":"https://github.com/sos82/vscode_micropython"
+		"type": "git",
+		"url": "https://github.com/sos82/vscode_micropython"
 	},
-	"keywords": ["microbit", "micropython"],
+	"keywords": [
+		"microbit",
+		"micropython"
+	],
 	"engines": {
 		"vscode": "^1.57.0"
 	},
@@ -18,7 +21,13 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onView:MicrobitExplorer"
+		"onView:MicrobitExplorer",
+		"onCommand:MicrobitExplorer.refreshEntry",
+		"onCommand:MicrobitExplorer.uploadEntry",
+		"onCommand:MicrobitExplorer.downloadEntry",
+		"onCommand:MicrobitExplorer.deleteEntry",
+		"onCommand:MicrobitExplorer.resetEntry",
+		"onCommand:MicrobitExplorer.disconnectEntry"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -130,26 +139,33 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run compile",
+		"vscode:prepublish": "npm install && npm run compile",
 		"compile": "tsc -p ./",
 		"lint": "eslint . --ext .ts,.tsx",
-		"watch": "tsc -watch -p ./"
+		"watch": "tsc -watch -p ./",
+		"install": "electron-rebuild",
+		"pretest": "npm run compile",
+		"test": "node ./out/test/runTest.js",
+		"deploy": "vsce publish --yarn"
 	},
 	"devDependencies": {
+		"@types/mocha": "^5.2.6",
 		"@types/node": "^14.16.0",
 		"@types/vscode": "^1.52.0",
 		"@types/rimraf": "^2.0.2",
 		"@typescript-eslint/eslint-plugin": "^4.16.0",
 		"@typescript-eslint/parser": "^4.16.0",
+		"@vscode/test-electron": "^1.6.1",
 		"eslint": "^7.21.0",
 		"typescript": "^4.3.5",
 		"electron": "^13.1.8",
-		"electron-rebuild": "^3.2.3"
+		"electron-rebuild": "^3.2.3",
+		"rimraf": "^2.6.2",
+		"minimist": "^0.2.1",
+		"mocha": "^6.1.4",
+		"electron-releases": "^3.783.0"
 	},
 	"dependencies": {
-		"serialport": "^9.2.1",
-		"electron-releases": "^3.783.0",
-		"rimraf": "^2.6.2",
-		"minimist": "^0.2.1"
+		"serialport": "^9.2.1"
 	}
 }

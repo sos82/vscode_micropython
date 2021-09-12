@@ -5,10 +5,18 @@ Explorer micro:bit with MicroPython in Visual Studio Code.
 
 ![Explorer file on Micro:bit!](https://github.com/sos82/vscode_micropython/raw/master/media/explorer_2.png "Explorer file on Micro:bit")
 
+## Support OS
+Currently extension only support:
+* Windows
+* Linux
+
+For MacOS, I update it later
+
 ## Features
 * Explorer files in micro:bit.
 * Upload files to micro:bit.
 * Download files from micro:bit to local space.
+* Add "Micro:bit" output to get status of device.
 
 ## Preconditions
 * We must install MicroPython in micro:bit first. 
