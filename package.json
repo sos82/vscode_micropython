@@ -167,6 +167,6 @@
 		"typescript": "^4.3.5"
 	},
 	"dependencies": {
-		"serialport": "^9.2.1"
+		"serialport": "^12.0.0"
 	}
 }
