@@ -7,7 +7,7 @@ import { resolve } from 'path';
 
 const fs = require('fs').promises;
 //const SerialPort = require('node-usb-native');
-const SerialPort = require('serialport');
+const sp = require('serialport');
 //const Readline = require('@serialport/parser-readline')
 var events = require('events');
 
@@ -131,11 +131,13 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 			{
 				if (file != ".vscode")
 				{
-					// TODO will support folder later
+					// TODO need investigate to create folder
 					/*
 					await this.createFolder(path.join(relatePath, file));
-					await this.ScanUploadFileInFolder(path.join(this.workspaceRoot, file),  
-					path.join(relatePath, file) );
+					await this.ScanUploadFileInFolder(
+						path.join(this.workspaceRoot, file),  
+						path.join(relatePath, file)
+						);
 					*/
 				}
 			}
@@ -143,7 +145,7 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 			{
 				let targetFile = path.join(relatePath, file);
 				console.log("Begin write " + targetFile)
-				await this.UploadFile(path.join(this.workspaceRoot, file), targetFile);
+				await this.UploadFile(path.join(currPath, file), targetFile);
 				console.log("End write " + targetFile)
 			}
 		}
@@ -190,7 +192,8 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 			return ;
 		}
 		await this.SendAndRecv("import os\r\n", false);
-		await this.SendAndRecv("os.mkdir('" + path + "')\r\n", false);
+		let result = await this.SendAndRecv("os.mkdir('" + path + "')\r\n", false);
+		console.log(result);
 
 	}
 
@@ -204,7 +207,8 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 		await this.StopRunning();
 
 		await this.SendAndRecv("import os\r\n", false);
-		await this.SendAndRecv("os.remove('" + node.filename + "')\r\n", false);
+		let result = await this.SendAndRecv("os.remove('" + node.filename + "')\r\n", false);
+		console.log(result);
 		await this.refresh();
 	}
 
@@ -215,7 +219,7 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 			return
 		}
 
-		SerialPort.list().then(
+		sp.SerialPort.list().then(
 			async ports => {
 				for (const index in ports)
 				{
@@ -359,7 +363,7 @@ export class MicrobitFileProvider implements vscode.TreeDataProvider<MicrobitFil
 			return;
 		}
 		vscode.window.showInformationMessage('Connecting to ' + serialpath);
-		this.serialPort = new SerialPort(serialpath, {
+		this.serialPort = new sp.SerialPort({path: serialpath,
 			baudRate: 115200
 		});
 
